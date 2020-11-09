@@ -15,7 +15,7 @@ userRouter.get('/seed', expressAsyncHandler(async(req, res)=> {
 
 userRouter.post('/signin', expressAsyncHandler(async (req, res) => {
     const user = await User.findOne({ email: req.body.email })
-    if(user) {
+    if (user) {
         if (bcrypt.compareSync(req.body.password, user.password)) {
             res.send({
                 _id: user._id,
@@ -27,7 +27,7 @@ userRouter.post('/signin', expressAsyncHandler(async (req, res) => {
             return ;
         }
     }
-    res.status(401).send({ message: 'Invalid email or password '})
+    res.status(401).send({ message: 'Invalid email or password'})
 }))
 
 module.exports = userRouter
