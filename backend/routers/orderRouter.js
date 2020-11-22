@@ -18,11 +18,57 @@ orderRouter.post('/', isAuth, expressAsyncHandler(async(req, res) => {
             shippingPrice: req.body.shippingPrice,
             taxPrice: req.body.taxPrice,
             totalPrice: req.body.totalPrice,
-            user: req.user._id
+            user: req.user._id,
+            code: Date.now()
         })
         const createdOrder = await order.save()
         res.status(201).send({ message : 'New order Created', order: createdOrder })
     }
+}))
+
+orderRouter.get('/list', isAuth, isAdmin, expressAsyncHandler(async (req, res) => {
+  let { search, page } = req.query
+  search = search || ''
+  
+  const limit = 20
+  let skip = (page - 1) * limit;
+  const rgx = (pattern) => new RegExp(`.*${pattern}.*`);
+  const searchRgx = rgx(search);
+  const totalOrder = await Order.estimatedDocumentCount()
+
+  const orders = await Order.find({
+    $or: [
+      { "orderItems.name": { $regex: searchRgx, $options: "i" }, },
+      { "shippingAddress.postalCode":  { $regex: searchRgx, $options: "i" }},
+      { "shippingAddress.fullName": { $regex: searchRgx, $options: "i" } },
+      { "shippingAddress.address": { $regex: searchRgx, $options: "i" } },
+      { "shippingAddress.city": { $regex: searchRgx, $options: "i" } },
+      { "shippingAddress.country": { $regex: searchRgx, $options: "i" } },
+      { "paymentMethod": { $regex: searchRgx, $options: "i" } },
+    ]
+  })
+    .limit(limit)
+    .skip(parseInt(skip) || 0)
+
+  res.send({ orders, total: totalOrder })
+}))
+
+orderRouter.patch('/:id/delivery', isAuth, isAdmin, expressAsyncHandler( async(req, res) => {
+  const order = await Order.findById(req.params.id)
+  if(order) {
+    order.isDelivered = true;
+    order.deliveredAt =  Date.now();
+    order.deliveredBy = {
+      name: req.body.name,
+      phone: req.body.phone,
+      estimatedTime: req.body.estimatedTime,
+      type: req.body.type 
+    }
+    const updatedOrder = await order.save()
+    res.send({ message: 'Order delivered', order: updatedOrder, success: true })
+  } else {
+    res.status(404).send({ message: 'Order not found' })
+  }
 }))
 
 orderRouter.get('/:id', isAuth, expressAsyncHandler(async(req, res) => {
@@ -32,28 +78,6 @@ orderRouter.get('/:id', isAuth, expressAsyncHandler(async(req, res) => {
     } else {
         res.status(404).send({ message: 'Order not found' })
     }
-}))
-
-orderRouter.get('/list', isAuth, isAdmin, expressAsyncHandler(async (req, res) => {
-    let { search, page } = req.query
-    search = search || ''
-    const limit = 20
-    let skip = (page -1 ) * limit; 
-    const rgx = (pattern) => new RegExp(`.*${pattern}.*`);
-    const searchRgx = rgx(search);
-    const totalOrder = await Order.estimatedDocumentCount()
-    const orders = await Order.find({
-        $or: [
-            { name: { $regex: searchRgx, $options: "i" } },
-            { category: { $regex: searchRgx, $options: "i" } },
-            { brand: { $regex: searchRgx, $options: "i" } },
-            { description: { $regex: searchRgx, $options: "i" } },
-        ]
-    })
-        .limit(limit)
-        .skip(parseInt(skip) || 0)
-
-    res.send({ orders, total: totalOrder })
 }))
 
 orderRouter.put('/:id/pay', isAuth, expressAsyncHandler(async (req, res) => {

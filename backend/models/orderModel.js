@@ -26,14 +26,22 @@ const orderSchema = new mongoose.Schema({
         update_time: String,
         email_address: String
     },
+    deliveredBy:{
+      name: { type:String, required: false },
+      estimatedTime: { type: String, required: false },
+      phone: { type: String, required: false },
+      type: { type: String, required: false }
+    },
     itemsPrice: { type: Number, required: true },
     shippingPrice: { type: Number, required: true },
     taxPrice: { type: Number, required: true },
     totalPrice: { type: Number, required: true },
     user: { type: mongoose.Schema.Types.ObjectId, ref:'User', required: true },
     isPaid: { type: Boolean, default: false },
+    paidAt: { type: String, required: false },
     isDelivered: { type: Boolean, default: false },
-    deliveredAt: { type:Date }
+    deliveredAt: { type:Date },
+    code: { type: String }
 },{
     timestamps: true
 })

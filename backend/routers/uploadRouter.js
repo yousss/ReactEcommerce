@@ -59,7 +59,7 @@ uploadRouter.post('/', isAuth, uploadS3.single('image'), (req, res, next) => {
         }
         const returnData = {
             signedRequest: data,
-            url: `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${fileName}`
+            url: `${req.file.location}`
         };
         res.send(returnData);
     });
