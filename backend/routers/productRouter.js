@@ -8,7 +8,22 @@ const { isAuth, isAdmin } = require('../helpers/utils')
 const productRouter = express.Router();
 
 productRouter.get('/', expressAsyncHandler(async(req, res) => {
-    const products = await Product.find({});
+  let { page, category, brand, rating } = req.query;
+
+  let products = ''
+  const limit = 20
+  let skip = (page - 1) * limit;
+  if(brand) {
+    products = await Product.find({ brand }).limit(limit).skip(skip);
+  }
+  else if (rating) {
+    products = await Product.find({ rating }).limit(limit).skip(skip);
+  }
+  else if (category) {
+    products = await Product.find({ category }).limit(limit).skip(skip);
+  } else {
+   products = await Product.find({}).limit(limit).skip(skip);
+  }
     const totalProduct = await Product.estimatedDocumentCount()
     res.send({products, total: totalProduct});
 }))
